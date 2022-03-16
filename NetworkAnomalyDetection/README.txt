@@ -1,0 +1,1 @@
+Create folders ‘categoryMappings’, ‘ScenarioA_SA’, ‘ScenarioB_SB’, ‘ScenarioC_SC’, ‘ScenarioD_SD’, and ‘ScenarioE_SE’ in working directory to store results.

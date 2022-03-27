@@ -1,0 +1,108 @@
+#!/bin/sh
+
+####
+# Internet ip address
+# 
+#
+Internet_IP="10.0.1.5"
+Internet_IP_RANGE="10.0.1.0/24"
+Internet_BCAST_ADRESS="10.0.1.255"
+Internet_IFACE="enp0s8"
+
+####
+# Client network configuration.
+#
+#
+
+#
+# IP addresses of the client-side network
+#
+Client_NET_IP="10.0.2.5"
+Client_NET_IP_RANGE="10.0.2.0/24"
+Client_NET_BCAST_ADRESS="10.0.2.255"
+Client_NET_IFACE="enp0s3"
+
+
+#
+# IP aliases for the server (server's IP address)
+#
+LO_IFACE="lo"
+LO_IP="127.0.0.1"
+WEB_IP_ADDRESS="127.0.0.1"
+#IP aliases for NATed services (this is the GW's ip on client network)
+NAT_WEB_IP_ADDRESS="10.0.2.6"
+
+####
+# IPTables Configuration.
+#
+
+IPTABLES="/sbin/iptables"
+
+
+#####
+# Filter table
+#
+
+#
+# Set default policies for the INPUT, FORWARD and OUTPUT chains
+#
+
+# Whitelist (Whitelist is preferred)
+$IPTABLES -P INPUT DROP
+$IPTABLES -P OUTPUT DROP
+$IPTABLES -P FORWARD DROP
+
+# Blacklist
+#$IPTABLES -P INPUT ACCEPT
+#$IPTABLES -P OUTPUT ACCEPT
+#$IPTABLES -P FORWARD ACCEPT
+
+
+#####
+# FORWARD chain
+#
+
+$IPTABLES -A FORWARD -p icmp --icmp-type echo-request -d 8.8.8.8 -j ACCEPT
+
+$IPTABLES -A FORWARD -p icmp --icmp-type echo-reply -s 8.8.8.8 -j ACCEPT
+
+
+
+#####
+# 4.3 INPUT chain
+#
+
+$IPTABLES -A INPUT -p tcp --dport 80 -s $Client_NET_IP -d $NAT_WEB_IP_ADDRESS -j ACCEPT
+
+# Allowed ping from client and server
+$IPTABLES -A INPUT -p icmp -j ACCEPT
+
+
+#####
+# OUTPUT chain
+#
+
+$IPTABLES -A OUTPUT -p tcp -s $NAT_WEB_IP_ADDRESS -d $Client_NET_IP -j ACCEPT
+
+
+#####################################################################
+#                                                                   #
+# 5. NAT setup                                                      #
+#                                                                   #
+#####################################################################
+
+#####
+# PREROUTING chain.
+#
+#
+
+
+#####
+# POSTROUTING chain.
+#
+
+$IPTABLES -t nat -A POSTROUTING -p icmp -d 8.8.8.8 -o $Internet_IFACE -s $Client_NET_IP -j MASQUERADE
+
+
+
+
